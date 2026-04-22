@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SpeedLoad</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0d0d;
+    --bg2: #141414;
+    --bg3: #1a1a1a;
+    --bg4: #222;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #f0f0f0;
+    --text2: #888;
+    --text3: #555;
+    --accent: #00d084;
+    --accent2: #00a86b;
+    --accent-dim: rgba(0,208,132,0.12);
+    --danger: #ff4757;
+    --warn: #ffa502;
+    --blue: #3d9eff;
+    --radius: 8px;
+    --radius-lg: 12px;
+  }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* ── Titlebar ── */
+  .titlebar {
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    height: 44px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    -webkit-app-region: drag;
+    flex-shrink: 0;
+  }
+
+  .titlebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: -0.3px;
+  }
+
+  .logo-icon {
+    width: 22px;
+    height: 22px;
+    background: var(--accent);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .logo-icon svg { width: 13px; height: 13px; fill: #000; }
+
+  .titlebar-spacer { flex: 1; }
+
+  .titlebar-donate {
+    -webkit-app-region: no-drag;
+    padding: 4px 12px;
+    border-radius: 20px;
+    background: rgba(255,215,0,0.1);
+    border: 1px solid rgba(255,215,0,0.2);
+    color: #ffd700;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-right: 12px;
+    transition: all 0.15s;
+  }
+  .titlebar-donate:hover { background: rgba(255,215,0,0.18); }
+
+  .win-controls {
+    display: flex;
+    gap: 6px;
+    -webkit-app-region: no-drag;
+  }
+
+  .win-btn {
+    width: 13px; height: 13px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    transition: filter 0.1s;
+  }
+  .win-btn:hover { filter: brightness(1.3); }
+  .win-btn.close { background: #ff5f57; }
+  .win-btn.min   { background: #febc2e; }
+  .win-btn.max   { background: #28c840; }
+
+  /* ── Toolbar ── */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .url-input {
+    flex: 1;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    color: var(--text);
+    padding: 8px 14px;
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .url-input:focus { border-color: var(--accent); }
+  .url-input::placeholder { color: var(--text3); }
+
+  .toolbar-select {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    color: var(--text);
+    padding: 8px 10px;
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    cursor: pointer;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: var(--radius);
+    padding: 8px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .btn-primary:hover { background: #00e891; }
+  .btn-primary:active { transform: scale(0.97); }
+
+  .btn-icon {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    color: var(--text2);
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .btn-icon:hover { background: var(--bg4); color: var(--text); }
+  .btn-icon svg { width: 16px; height: 16px; }
+
+  /* ── Settings bar ── */
+  .settings-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 8px 16px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text2);
+    flex-shrink: 0;
+  }
+
+  .setting-item { display: flex; align-items: center; gap: 8px; }
+  .setting-label { white-space: nowrap; }
+
+  .setting-item input[type=range] {
+    width: 100px;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+
+  .setting-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    min-width: 70px;
+  }
+
+  .save-path {
+    display: flex; align-items: center; gap: 6px;
+    margin-left: auto;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+    max-width: 300px;
+  }
+  .save-path:hover { border-color: var(--border2); }
+  .save-path span { font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .save-path svg { width: 13px; height: 13px; flex-shrink: 0; }
+
+  /* ── Stats bar ── */
+  .stats-bar {
+    display: flex;
+    gap: 1px;
+    padding: 0;
+    background: var(--border);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .stat-pill {
+    flex: 1;
+    background: var(--bg2);
+    padding: 8px 16px;
+    text-align: center;
+  }
+  .stat-pill .sv { font-size: 18px; font-weight: 600; color: var(--text); font-family: 'JetBrains Mono', monospace; }
+  .stat-pill .sl { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 1px; }
+
+  /* ── Download list ── */
+  .list-header {
+    display: grid;
+    grid-template-columns: 2fr 100px 140px 100px 120px;
+    gap: 0;
+    padding: 0 16px;
+    height: 32px;
+    align-items: center;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    font-size: 10px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    flex-shrink: 0;
+  }
+
+  .dl-list {
+    flex: 1;
+    overflow-y: auto;
+    background: var(--bg);
+  }
+
+  .dl-list::-webkit-scrollbar { width: 4px; }
+  .dl-list::-webkit-scrollbar-track { background: transparent; }
+  .dl-list::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 2px; }
+
+  .dl-item {
+    display: grid;
+    grid-template-columns: 2fr 100px 140px 100px 120px;
+    gap: 0;
+    padding: 0 16px;
+    height: 64px;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+    cursor: default;
+  }
+  .dl-item:hover { background: var(--bg2); }
+  .dl-item.active { border-left: 2px solid var(--accent); }
+  .dl-item.done { border-left: 2px solid var(--bg3); }
+  .dl-item.error { border-left: 2px solid var(--danger); }
+
+  .dl-name-col { overflow: hidden; padding-right: 12px; }
+  .dl-name { font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dl-sub { font-size: 11px; color: var(--text2); margin-top: 2px; display: flex; align-items: center; gap: 8px; }
+  .dl-ext-badge {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 3px;
+    padding: 0 5px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text2);
+  }
+
+  .dl-size { font-size: 12px; color: var(--text2); font-family: 'JetBrains Mono', monospace; }
+
+  .dl-progress-col {}
+  .dl-bar-wrap { height: 3px; background: var(--bg4); border-radius: 2px; overflow: hidden; margin-bottom: 4px; }
+  .dl-bar-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.3s linear; }
+  .dl-bar-fill.done { background: var(--text3); }
+  .dl-bar-fill.error { background: var(--danger); }
+  .dl-prog-info { display: flex; justify-content: space-between; font-size: 10px; color: var(--text2); font-family: 'JetBrains Mono', monospace; }
+
+  .dl-speed-col { font-size: 12px; font-family: 'JetBrains Mono', monospace; }
+  .dl-speed-val { color: var(--accent); }
+  .dl-speed-threads { font-size: 10px; color: var(--text3); margin-top: 2px; }
+
+  .dl-actions { display: flex; gap: 6px; justify-content: flex-end; }
+  .dl-action-btn {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all 0.1s;
+  }
+  .dl-action-btn:hover { background: var(--bg4); color: var(--text); }
+  .dl-action-btn svg { width: 13px; height: 13px; }
+
+  /* ── Thread viz (bottom panel) ── */
+  .thread-panel {
+    flex-shrink: 0;
+    border-top: 1px solid var(--border);
+    background: var(--bg2);
+    padding: 10px 16px;
+    display: none;
+  }
+  .thread-panel.visible { display: block; }
+  .thread-panel-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px; }
+  .thread-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 5px; }
+  .thread-seg { display: flex; align-items: center; gap: 6px; }
+  .thread-seg-label { font-size: 10px; color: var(--text3); font-family: 'JetBrains Mono', monospace; min-width: 42px; }
+  .thread-seg-bar { flex: 1; height: 4px; background: var(--bg4); border-radius: 2px; overflow: hidden; }
+  .thread-seg-fill { height: 100%; border-radius: 2px; transition: width 0.3s; }
+  .thread-seg-pct { font-size: 10px; color: var(--text3); font-family: 'JetBrains Mono', monospace; min-width: 28px; text-align: right; }
+
+  /* ── Empty state ── */
+  .empty {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    height: 100%;
+    color: var(--text3);
+    gap: 12px;
+  }
+  .empty svg { width: 40px; height: 40px; opacity: 0.3; }
+  .empty p { font-size: 14px; }
+  .empty small { font-size: 12px; opacity: 0.6; }
+
+  /* Status badges */
+  .badge { padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 500; }
+  .badge-active  { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(0,208,132,0.2); }
+  .badge-done    { background: rgba(255,255,255,0.05); color: var(--text3); border: 1px solid var(--border); }
+  .badge-error   { background: rgba(255,71,87,0.1); color: var(--danger); border: 1px solid rgba(255,71,87,0.2); }
+  .badge-pending { background: rgba(61,158,255,0.1); color: var(--blue); border: 1px solid rgba(61,158,255,0.2); }
+  .badge-fetching { background: rgba(255,165,2,0.1); color: var(--warn); border: 1px solid rgba(255,165,2,0.2); }
+  .badge-cancelled { background: rgba(255,255,255,0.04); color: var(--text3); border: 1px solid var(--border); }
+  .badge-paused { background: rgba(255,255,255,0.1); color: var(--text); border: 1px solid rgba(255,255,255,0.2); }
+</style>
+</head>
+<body>
+
+<!-- Titlebar -->
+<div class="titlebar">
+  <div class="titlebar-logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 14 14"><path d="M7 1v8M4 6l3 3 3-3M2 11h10" stroke="#000" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>
+    </div>
+    SpeedLoad
+  </div>
+  <div class="titlebar-spacer"></div>
+  <button class="titlebar-donate" onclick="window.api.openDonate()">☕ Buy me a coffee</button>
+  <div class="win-controls">
+    <button class="win-btn min" onclick="window.api.minimize()"></button>
+    <button class="win-btn max" onclick="window.api.maximize()"></button>
+    <button class="win-btn close" onclick="window.api.close()"></button>
+  </div>
+</div>
+
+<!-- Toolbar -->
+<div class="toolbar">
+  <input class="url-input" id="urlInput" type="text" placeholder="Cole a URL aqui — http/https..." />
+  <select class="toolbar-select" id="threadsSelect">
+    <option value="4">4x</option>
+    <option value="8">8x</option>
+    <option value="16" selected>16x</option>
+    <option value="32">32x</option>
+    <option value="64">64x</option>
+  </select>
+  <button class="btn-primary" onclick="addDownload()">⬇ Baixar</button>
+  <button class="btn-icon" title="Colar URL da área de transferência" onclick="pasteUrl()">
+    <svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 2h8v1H4V2zM2 4h12v10H2V4zm1 1v8h10V5H3zm3 2h4v1H6V7zm0 2h4v1H6V9z"/></svg>
+  </button>
+</div>
+
+<!-- Settings bar -->
+<div class="settings-bar">
+  <div class="setting-item">
+    <span class="setting-label">Threads</span>
+    <input type="range" min="1" max="64" step="1" value="16" id="threadSlider"
+      oninput="document.getElementById('threadsSelect').value=Math.min(64,this.value); document.getElementById('threadVal').textContent=this.value">
+    <span class="setting-val" id="threadVal">16</span>
+  </div>
+  <div class="setting-item">
+    <span class="setting-label">Limite de velocidade</span>
+    <input type="range" min="0" max="100" step="1" value="0" id="speedLimitSlider"
+      oninput="document.getElementById('speedLimitVal').textContent=this.value==0?'Ilimitado':this.value+' MB/s'">
+    <span class="setting-val" id="speedLimitVal">Ilimitado</span>
+  </div>
+  <div class="save-path" id="savePathBtn" onclick="chooseFolder()">
+    <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 3h4l1 1h7v9H2V3z"/></svg>
+    <span id="savePathLabel">Downloads</span>
+  </div>
+</div>
+
+<!-- Stats bar -->
+<div class="stats-bar">
+  <div class="stat-pill"><div class="sv" id="statActive">0</div><div class="sl">Ativos</div></div>
+  <div class="stat-pill"><div class="sv" id="statSpeed">0 MB/s</div><div class="sl">Velocidade total</div></div>
+  <div class="stat-pill"><div class="sv" id="statDone">0</div><div class="sl">Concluídos</div></div>
+  <div class="stat-pill"><div class="sv" id="statTotal">0 MB</div><div class="sl">Baixados</div></div>
+  <div class="stat-pill"><div class="sv" id="statSaved">—</div><div class="sl">Economia vs 1 thread</div></div>
+</div>
+
+<!-- List header -->
+<div class="list-header">
+  <span>Arquivo</span>
+  <span>Tamanho</span>
+  <span>Progresso</span>
+  <span>Velocidade</span>
+  <span style="text-align:right">Ações</span>
+</div>
+
+<!-- Download list -->
+<div class="dl-list" id="dlList">
+  <div class="empty">
+    <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M20 5v20M12 18l8 7 8-7M8 32h24" stroke-linecap="round"/>
+    </svg>
+    <p>Nenhum download ainda</p>
+    <small>Cole uma URL e clique Baixar</small>
+  </div>
+</div>
+
+<!-- Thread visualization panel -->
+<div class="thread-panel" id="threadPanel">
+  <div class="thread-panel-label">Segmentos paralelos — download ativo</div>
+  <div class="thread-grid" id="threadGrid"></div>
+</div>
+
+<script>
+const downloads = new Map();
+let savePath = null;
+let totalBytes = 0;
+
+const THREAD_COLORS = [
+  '#00d084','#3d9eff','#ff4757','#ffa502','#a29bfe',
+  '#fd79a8','#00cec9','#e17055','#74b9ff','#55efc4',
+  '#fdcb6e','#6c5ce7','#00b894','#e84393','#0984e3','#d63031'
+];
+
+async function init() {
+  savePath = await window.api.getDefaultFolder();
+  document.getElementById('savePathLabel').textContent = savePath;
+}
+init();
+
+async function chooseFolder() {
+  const chosen = await window.api.chooseFolder();
+  if (chosen) {
+    savePath = chosen;
+    document.getElementById('savePathLabel').textContent = chosen;
+  }
+}
+
+async function pasteUrl() {
+  try {
+    const text = await navigator.clipboard.readText();
+    if (text.startsWith('http')) document.getElementById('urlInput').value = text;
+  } catch {}
+}
+
+async function addDownload() {
+  const urlVal = document.getElementById('urlInput').value.trim();
+  if (!urlVal) return;
+
+  const threads = parseInt(document.getElementById('threadSlider').value);
+  const speedLimit = parseInt(document.getElementById('speedLimitSlider').value);
+
+  const id = await window.api.addDownload({ url: urlVal, threads, savePath, speedLimit });
+  downloads.set(id, { id, status: 'pending', filename: 'Aguardando...', size: 0, progress: 0, speed: 0, threads, segmentProgress: [], segmentTotal: [] });
+  document.getElementById('urlInput').value = '';
+  renderList();
+}
+
+// Listen for updates from main
+window.api.onDownloadUpdate((data) => {
+  downloads.set(data.id, { ...downloads.get(data.id), ...data });
+  if (data.status === 'done') totalBytes += data.size || 0;
+  renderList();
+  updateStats();
+  renderThreadPanel();
+});
+
+function formatBytes(bytes) {
+  if (!bytes || bytes === 0) return '—';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+  if (bytes < 1024*1024*1024) return (bytes/1024/1024).toFixed(1) + ' MB';
+  return (bytes/1024/1024/1024).toFixed(2) + ' GB';
+}
+
+function formatSpeed(bps) {
+  if (!bps || bps <= 0) return '—';
+  return (bps / 1024 / 1024).toFixed(1) + ' MB/s';
+}
+
+function getExt(filename) {
+  if (!filename || !filename.includes('.')) return 'FILE';
+  return filename.split('.').pop().toUpperCase().substring(0, 4);
+}
+
+function getBadge(status) {
+  const map = {
+    active: '<span class="badge badge-active">Baixando</span>',
+    downloading: '<span class="badge badge-active">Baixando</span>',
+    done: '<span class="badge badge-done">Concluído</span>',
+    error: '<span class="badge badge-error">Erro</span>',
+    pending: '<span class="badge badge-pending">Na fila</span>',
+    fetching: '<span class="badge badge-fetching">Verificando</span>',
+    cancelled: '<span class="badge badge-cancelled">Cancelado</span>',
+    paused: '<span class="badge badge-paused">Pausado</span>',
+  };
+  return map[status] || `<span class="badge badge-pending">${status}</span>`;
+}
+
+function renderList() {
+  const list = document.getElementById('dlList');
+  if (downloads.size === 0) {
+    list.innerHTML = `<div class="empty">
+      <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M20 5v20M12 18l8 7 8-7M8 32h24" stroke-linecap="round"/>
+      </svg>
+      <p>Nenhum download ainda</p><small>Cole uma URL e clique Baixar</small>
+    </div>`;
+    return;
+  }
+
+  const items = [...downloads.values()].reverse();
+  list.innerHTML = items.map(dl => {
+    const isActive = dl.status === 'downloading' || dl.status === 'active' || dl.status === 'fetching';
+    const isPaused = dl.status === 'paused';
+    const isDone = dl.status === 'done';
+    const isError = dl.status === 'error';
+    const pct = Math.round(dl.progress || 0);
+    const barClass = isDone ? 'done' : isError ? 'error' : isPaused ? 'paused' : '';
+
+    return `<div class="dl-item ${isActive ? 'active' : isDone ? 'done' : isError ? 'error' : ''}">
+      <div class="dl-name-col">
+        <div class="dl-name">${dl.filename || 'Aguardando...'}</div>
+        <div class="dl-sub">
+          <span class="dl-ext-badge">${getExt(dl.filename)}</span>
+          ${dl.threads > 1 ? `<span>${dl.threads} threads</span>` : ''}
+          ${dl.error ? `<span style="color:var(--danger)">${dl.error}</span>` : ''}
+          ${getBadge(dl.status)}
+        </div>
+      </div>
+      <div class="dl-size">${formatBytes(dl.size)}</div>
+      <div class="dl-progress-col">
+        <div class="dl-bar-wrap"><div class="dl-bar-fill ${barClass}" style="width:${pct}%"></div></div>
+        <div class="dl-prog-info"><span>${pct}%</span><span>${formatBytes(dl.size * pct / 100)}</span></div>
+      </div>
+      <div class="dl-speed-col">
+        <div class="dl-speed-val">${formatSpeed(dl.speed)}</div>
+      </div>
+      <div class="dl-actions">
+        ${isDone ? `
+          <div class="dl-action-btn" title="Abrir arquivo" onclick="openFile(${dl.id})">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M6 2H3v12h10V6l-4-4H6zm0 1v3h3V4H7V3H6zm-2-2h5l4 4v9a1 1 0 01-1 1H3a1 1 0 01-1-1V2a1 1 0 011-1z"/></svg>
+          </div>
+          <div class="dl-action-btn" title="Mostrar na pasta" onclick="showFolder(${dl.id})">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 3h4l1 1h7v9H2V3z"/></svg>
+          </div>
+        ` : (isActive || isPaused || isError) ? `
+          ${(isPaused || isError) ? `
+            <div class="dl-action-btn" title="Retomar" onclick="resumeDl(${dl.id})">
+              <svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 3l9 5-9 5V3z"/></svg>
+            </div>
+          ` : `
+            <div class="dl-action-btn" title="Pausar" onclick="pauseDl(${dl.id})">
+              <svg viewBox="0 0 16 16" fill="currentColor"><path d="M5 3h2v10H5V3zm4 0h2v10H9V3z"/></svg>
+            </div>
+          `}
+          <div class="dl-action-btn" title="Cancelar" onclick="cancelDl(${dl.id})">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/></svg>
+          </div>
+        ` : ''}
+        <div class="dl-action-btn" title="Remover" onclick="removeDl(${dl.id})">
+          <svg viewBox="0 0 16 16" fill="currentColor"><path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5zM11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H2.506a.58.58 0 0 0-.01 1.159l.753 10.066A1.5 1.5 0 0 0 4.747 15h6.506a1.5 1.5 0 0 0 1.498-1.275l.753-10.066A.58.58 0 0 0 13.494 2.5H11zm-1 0H6v-1h4v1z"/></svg>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updateStats() {
+  const arr = [...downloads.values()];
+  const active = arr.filter(d => d.status === 'downloading' || d.status === 'active');
+  const done = arr.filter(d => d.status === 'done');
+  const totalSpeed = active.reduce((s, d) => s + (d.speed || 0), 0);
+  const totalMB = done.reduce((s, d) => s + (d.size || 0), 0);
+
+  document.getElementById('statActive').textContent = active.length;
+  document.getElementById('statSpeed').textContent = (totalSpeed / 1024 / 1024).toFixed(1) + ' MB/s';
+  document.getElementById('statDone').textContent = done.length;
+  document.getElementById('statTotal').textContent = (totalMB / 1024 / 1024).toFixed(0) + ' MB';
+
+  // "savings" — estimate: parallel is ~N-1x faster than 1 thread
+  const avgThreads = arr.length > 0 ? arr.reduce((s, d) => s + (d.threads || 1), 0) / arr.length : 1;
+  if (avgThreads > 1) {
+    document.getElementById('statSaved').textContent = Math.round((avgThreads - 1) * 100 / avgThreads) + '% mais rápido';
+  }
+}
+
+function renderThreadPanel() {
+  const active = [...downloads.values()].find(d => d.status === 'downloading' || d.status === 'active');
+  const panel = document.getElementById('threadPanel');
+  if (!active || !active.segmentProgress || active.segmentProgress.length === 0) {
+    panel.classList.remove('visible');
+    return;
+  }
+  panel.classList.add('visible');
+  const grid = document.getElementById('threadGrid');
+  const maxShow = Math.min(active.segmentProgress.length, 32);
+  grid.innerHTML = active.segmentProgress.slice(0, maxShow).map((prog, i) => {
+    const total = active.segmentTotal[i] || 1;
+    const pct = Math.min(100, Math.round((prog / total) * 100));
+    const color = THREAD_COLORS[i % THREAD_COLORS.length];
+    return `<div class="thread-seg">
+      <span class="thread-seg-label">T${String(i+1).padStart(2,'0')}</span>
+      <div class="thread-seg-bar"><div class="thread-seg-fill" style="width:${pct}%;background:${color}"></div></div>
+      <span class="thread-seg-pct">${pct}%</span>
+    </div>`;
+  }).join('');
+}
+
+async function openFile(id) {
+  const dl = downloads.get(id);
+  if (dl && dl.savePath) await window.api.openFile(dl.savePath);
+}
+
+async function showFolder(id) {
+  const dl = downloads.get(id);
+  if (dl && dl.savePath) await window.api.showInFolder(dl.savePath);
+}
+
+async function cancelDl(id) {
+  await window.api.cancelDownload(id);
+  const dl = downloads.get(id);
+  if (dl) { dl.status = 'cancelled'; renderList(); }
+}
+
+async function pauseDl(id) {
+  await window.api.pauseDownload(id);
+}
+
+async function resumeDl(id) {
+  await window.api.resumeDownload(id);
+}
+
+async function removeDl(id) {
+  await window.api.removeDownload(id);
+  downloads.delete(id);
+  renderList();
+  updateStats();
+}
+
+// Enter to add
+document.getElementById('urlInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addDownload();
+});
+
+// Sync sliders
+document.getElementById('threadSlider').addEventListener('input', e => {
+  const val = parseInt(e.target.value);
+  const sel = document.getElementById('threadsSelect');
+  const closest = [4, 8, 16, 32, 64].reduce((a, b) => Math.abs(b - val) < Math.abs(a - val) ? b : a);
+  sel.value = closest;
+});
+
+document.getElementById('threadsSelect').addEventListener('change', e => {
+  document.getElementById('threadSlider').value = e.target.value;
+  document.getElementById('threadVal').textContent = e.target.value;
+});
+</script>
+</body>
+</html>
